@@ -1,54 +1,56 @@
 .main-space {
-    padding: 0px;
-    min-width: 1500px;
     width: 100vw;
     height: 100vh;
+    min-width: 1500px;
+    padding: 0px;
+
     display: flex;
-}
 
-.control-space {
-    min-width: 300px;
-    width: 300px;
-    height: 700px;
-    padding-left: 10px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: stretch;
-    gap: 0px;
-}
+    .control-space {
+        width: 300px;
+        height: 700px;
+        min-width: 300px;
+        padding-left: 10px;
 
-.bridge-container {
-    min-width: 1200px;
-    width: 1200px;
-    height: 700px;
-}
+        display: flex;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 0px;
+    }
 
-.background1 {
-    background-image: url('../img/background1.png');
-    background-repeat: no-repeat;
-    background-size: cover;
-    border: 1px solid #3f5669;
-}
+    .bridge-container {
+        width: 1200px;
+        height: 700px;
+        min-width: 1200px;
+    }
 
-.background2 {
-    background-image: url('../img/background2.png');
-    background-repeat: no-repeat;
-    background-size: cover;
-    border: 1px solid #3f5669;
-}
-
-.background3 {
-    background-image: url('../img/background3.png');
-    background-repeat: no-repeat;
-    background-size: cover;
-    border: 1px solid #3f5669;
-}
-
-.background4 {
-    background-image: url('../img/background4.png');
-    background-repeat: no-repeat;
-    background-size: cover;
-    border: 1px solid #3f5669;
+    .background1 {
+        background-image: url('../img/background1.png');
+        background-repeat: no-repeat;
+        background-size: cover;
+        border: 1px solid #3f5669;
+    }
+    
+    .background2 {
+        background-image: url('../img/background2.png');
+        background-repeat: no-repeat;
+        background-size: cover;
+        border: 1px solid #3f5669;
+    }
+    
+    .background3 {
+        background-image: url('../img/background3.png');
+        background-repeat: no-repeat;
+        background-size: cover;
+        border: 1px solid #3f5669;
+    }
+    
+    .background4 {
+        background-image: url('../img/background4.png');
+        background-repeat: no-repeat;
+        background-size: cover;
+        border: 1px solid #3f5669;
+    }
 }
 
 .ant-form-item {
