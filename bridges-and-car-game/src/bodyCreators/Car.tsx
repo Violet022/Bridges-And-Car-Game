@@ -29,9 +29,9 @@ export const createCar = (xx: number, yy: number, width: number, height: number,
         },
         render: {
             sprite: {
-                texture: 'C:/HITs/GitHub/Bridges-And-Car-Game/bridges-and-car-game/src/img/car/wheel.png',
-                xScale: 0.4,
-                yScale: 0.4,  
+                texture: 'https://raw.githubusercontent.com/Violet022/Bridges-And-Car-Game/car-branch/bridges-and-car-game/src/img/car/wheel.png',
+                xScale: 0.1,
+                yScale: 0.1,  
             }
         },
         friction: 0.8
