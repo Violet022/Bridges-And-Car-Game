@@ -29,9 +29,9 @@ export const createCar = (xx: number, yy: number, width: number, height: number,
         },
         render: {
             sprite: {
-                texture: 'https://raw.githubusercontent.com/Violet022/Bridges-And-Car-Game/car-branch/bridges-and-car-game/src/img/car/wheel.png',
-                xScale: 0.1,
-                yScale: 0.1,  
+                texture: 'https://github.com/Violet022/Bridges-And-Car-Game/blob/car-branch/bridges-and-car-game/src/img/car/wheel.png?raw=true',
+                xScale: 0.23,
+                yScale: 0.23,  
             }
         },
         friction: 0.8
@@ -43,9 +43,9 @@ export const createCar = (xx: number, yy: number, width: number, height: number,
         },
         render: {
             sprite: {
-                texture: 'https://opengameart.org/sites/default/files/styles/medium/public/SoccerBall_0.png',
-                xScale: 0.4,
-                yScale: 0.4,  
+                texture: 'https://github.com/Violet022/Bridges-And-Car-Game/blob/car-branch/bridges-and-car-game/src/img/car/wheel.png?raw=true',
+                xScale: 0.23,
+                yScale: 0.23,  
             }
         },
         friction: 0.8
