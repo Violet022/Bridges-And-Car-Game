@@ -20,6 +20,13 @@ export const createCar = (xx: number, yy: number, width: number, height: number,
         chamfer: {
             radius: height * 0.5
         },
+        render: {
+            sprite: {
+                texture: 'https://github.com/Violet022/Bridges-And-Car-Game/blob/car-branch/bridges-and-car-game/src/img/car/car_frame.png?raw=true',
+                xScale: 0.1,
+                yScale: 0.1,  
+            }
+        },
         density: 0.0002
     });
 
