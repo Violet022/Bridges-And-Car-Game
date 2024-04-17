@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Matter from 'matter-js';
-import { Input, Button, Form, Space, Select } from 'antd';
-import { createCar } from '../bodyCreators/Car';
+import { Input, Button, Form, Space, Select, Tooltip, Typography, Modal } from 'antd';
+import { createCar } from '../objects/Car/CarCreator';
 
 import './Level.css';
-import { createCanvas } from 'canvas';
+import { CarManipulations } from '../objects/Car/CarManipulations';
+import { IMatter, IModal } from '../utils/Interfaces';
+import { matterObjInitialState, modalInitialState } from '../utils/InitialStates';
 
 const { Option } = Select;
+const { Title } = Typography;
 const Engine = Matter.Engine,
       Render = Matter.Render,
       Body = Matter.Body,
@@ -14,17 +17,22 @@ const Engine = Matter.Engine,
       Composites = Matter.Composites,
       Composite = Matter.Composite,
       Constraint = Matter.Constraint,
-      Bodies = Matter.Bodies;
+      Bodies = Matter.Bodies,
+      Events = Matter.Events;
+const scale = 0.8;
 
 // Компонент Level, реализован с помощью Matter.js и частично с помощью chat GPT
 const Level = () => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const [background, setBackground] = useState<string>('background1');
+    const [world, setWorld] = useState<Matter.World>();
+    const [bridge, setBridge] = useState<Matter.Composite>();
+    const [car, setCar] = useState<Matter.Composite | null>();
+    const [matterObj, setMatterObj] = useState<IMatter>(matterObjInitialState);
+
     const [bridgeLength, setBridgeLength] = useState<number>(10);
     const [density, setDensity] = useState<number>(0.005); // Установка значения по умолчанию
     const [frictionAir, setFrictionAir] = useState<number>(0.5); // Установка значения по умолчанию
-    const [world, setWorld] = useState<Matter.World>();
-    const [br, setBridge] = useState<Matter.Composite>();
-    const [background, setBackground] = useState<string>('background1');
 
     const [AX, setAX] =useState<number>(240);
     const [AY, setAY] =useState<number>(410);
@@ -32,29 +40,37 @@ const Level = () => {
     const [BX, setBX] =useState<number>(960);
     const [BY, setBY] =useState<number>(410);
 
+    const [time, setTime] = useState<number>(1);
+    const [acceleration, setAcceleration] = useState<number>(0.5);
+    const [mass, setMass] = useState<number>(50);
+
+    const [modal, setModal] = useState<IModal>(modalInitialState)
+
+    const keysDown = new Set();
+
     useEffect(() => {
-        console.log(world)
-    }, [world])
+        function handleKeyUpAndDown(event: KeyboardEvent, type: 'ADD' | 'REMOVE') {
+            type === 'ADD' ? keysDown.add(event.code) : keysDown.delete(event.code)
+        }
+
+        document.addEventListener("keydown", (e) => {handleKeyUpAndDown(e, 'ADD')});
+        document.addEventListener("keyup", (e) => {handleKeyUpAndDown(e, 'REMOVE')});
+
+        return () => {
+            document.removeEventListener("keydown", (e) => {handleKeyUpAndDown(e, 'ADD')});
+            document.removeEventListener("keyup", (e) => {handleKeyUpAndDown(e, 'REMOVE')})
+        }
+    }, [])
 
    // Обработчик клика на кнопку "Добавить мост"
-   const handleClick = () => {
+    const handleClick = () => {
         if (world) {
-            // Удаляем все существующие объекты из мира
-            // Composite.clear(world, false, true);
-
-            //Добавление статических объектов
-            // Composite.add(world, [
-            //     Bodies.rectangle(130, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } }),
-            //     Bodies.rectangle(1070, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } })
-            // ]);
-    
-            // setWorld({...world});
-            if(br) Composite.remove(world, br)
+            if (bridge) Composite.remove(world, bridge)
             const group = Body.nextGroup(true);
 
             // Создаем мост
             const bridgeLengthValue = bridgeLength || 10;
-            const bridge = Composites.stack(160, 290, bridgeLengthValue, 1, 0, 0, (x: number, y: number) => {
+            const newBridge = Composites.stack(160, 290, bridgeLengthValue, 1, 0, 0, (x: number, y: number) => {
                 return Bodies.rectangle(x - 20, y, 53, 20, {
                     collisionFilter: { group: group },
                     chamfer: 5 as Matter.IChamfer,
@@ -64,24 +80,31 @@ const Level = () => {
                 });
             });
 
-            Composites.chain(bridge, 0.3, 0, -0.3, 0, { stiffness: 0.99, length: 0.0001, render: { visible: false } });
+            Composites.chain(newBridge, 0.3, 0, -0.3, 0, { stiffness: 0.99, length: 0.0001, render: { visible: false } });
 
             Composite.add(world, [
-                bridge,
-                Constraint.create({ pointA: { x: AX, y: AY }, bodyB: bridge.bodies[0], pointB: { x: -25, y: 0 }, length: 2, stiffness: 0.9 }),
-                Constraint.create({ pointA: { x: BX, y: BY }, bodyB: bridge.bodies[bridge.bodies.length - 1], pointB: { x: 25, y: 0 }, length: 2, stiffness: 0.9 })
+                newBridge,
+                Constraint.create({ pointA: { x: AX, y: AY }, bodyB: newBridge.bodies[0], pointB: { x: -25, y: 0 }, length: 2, stiffness: 0.9 }),
+                Constraint.create({ pointA: { x: BX, y: BY }, bodyB: newBridge.bodies[newBridge.bodies.length - 1], pointB: { x: 25, y: 0 }, length: 2, stiffness: 0.9 })
             ]);
-            Composite.add(world, createCar(400, 100, 150 * 0.8, 30 * 0.8, 30 * 0.8))
-            setBridge(bridge);
-            setWorld({...world})
+
+            const newCar: Matter.Composite = CarManipulations.updateWhileBridgeUpdating(world, car!);
+
+            setBridge(newBridge);
+            setCar(newCar);
+            setWorld(world)
         }
     };
+
+    // Обработчик клика на кнопку "Обновить настройки машины"
+    const handleCarUpdateClick = () => {
+        if (world && car) setCar(CarManipulations.updateMass(world, mass, car))
+    }
 
     // Функция для создания мира и объектов
     const createWorld = () => {
         const engine = Engine.create();
         const runner = Runner.create();
-
         const render = Render.create({
             element: containerRef.current!,
             engine: engine,
@@ -91,13 +114,37 @@ const Level = () => {
                 background: '',
                 wireframes: false,
                 pixelRatio: window.devicePixelRatio,
-                showAngleIndicator: true,
-                showCollisions: true
             },
         });
-        render.canvas = render.canvas || createCanvas(1200, 700);
-        
+        setMatterObj({
+            render: render,
+            runner: runner,
+            engine: engine,
+        })
         const world = engine.world;
+
+        const {car, keyHandlers} = createCar(125, 436, 150 * scale, 40 * scale, 28 * scale, mass);
+        setCar(car);
+
+        Events.on(runner, "tick", event => {
+            const curTime = Math.floor(Number(event.timestamp / 1000));
+            if (curTime !== time) setTime(curTime);
+        });
+        Events.on(engine, "beforeUpdate", event => {
+            for (const key of keysDown) {
+                keyHandlers[key as keyof typeof keyHandlers]?.(acceleration, time);
+            }
+            if (CarManipulations.isCarBeyondBoundaries(car, 1200, 700)) {
+                if (car !== null) {
+                    Composite.remove(world, car);
+                    setCar(null);
+                    if (!modal.isOpened) setModal({isOpened: true, gameResult: 'FAIL'});
+                }
+            }
+            if (CarManipulations.isCarOnTheOtherShore(car, 1070, 380)) {
+                setModal({isOpened: true, gameResult: 'SUCCESS'});
+            }
+        });
 
         Render.run(render);
         Runner.run(runner, engine);
@@ -105,40 +152,12 @@ const Level = () => {
         //Добавление статических объектов
         Composite.add(world, [
             Bodies.rectangle(130, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } }),
-            Bodies.rectangle(1070, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } })
+            Bodies.rectangle(1070, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } }),
+            Bodies.rectangle(10, 150, 20, 700, { isStatic: true, render: { fillStyle: 'transparent'}})
         ]);
-
-        const scale = 0.8;
-        Composite.add(world, createCar(400, 100, 150 * scale, 30 * scale, 30 * scale))
-
-        const ball = Bodies.circle(90, 280, 20, {
-            render: {
-              sprite: {
-                texture: "https://opengameart.org/sites/default/files/styles/medium/public/SoccerBall_0.png",
-                xScale: 0.4,
-                yScale: 0.4
-              }
-            }
-          });
-          Composite.add(world, ball)
+        Composite.add(world, car)
 
         setWorld(world);
-
-        const mouse = Matter.Mouse.create(render.canvas)
-        const mouseConstraint = Matter.MouseConstraint.create(engine, {
-            mouse: mouse,
-            constraint: {
-                stiffness: 0.2,
-                render: {
-                    visible: false
-                }
-            }
-        });
-
-        Composite.add(world, mouseConstraint);
-
-    // keep the mouse in sync with rendering
-        render.mouse = mouse;
 
         return { engine, world, render, runner };
     };
@@ -154,10 +173,22 @@ const Level = () => {
         setBackground(value);
     };
 
+    // Обработчик рестарта
+    const handleRestart = () => {
+        setModal(modalInitialState)
+        if (world) {
+            Render.stop(matterObj.render!);
+            Runner.stop(matterObj.runner!);
+            setMatterObj(matterObjInitialState);
+            Composite.clear(world, false, true);
+            createWorld();
+        }
+    }
+
     return (
         <Space direction="horizontal" className="main-space">
             <Space direction="vertical" className="control-space">
-                <Form.Item label="Выбрать уровернь">
+                <Form.Item label="Выбрать уровень">
                     <Select value={background} onChange={handleBackgroundChange}>
                         <Option value="background1">Уровень 1</Option>
                         <Option value="background2">Уровень 2</Option>
@@ -169,6 +200,7 @@ const Level = () => {
                     <Form.Item hidden={!!world}>
                         <Button type="primary" onClick={handleCreateWorldClick} disabled={!!world} style={{ background: '#3f4269' }}>Начать</Button>
                     </Form.Item>
+                    <Title hidden={!world} level={5} style={{margin: '0px 0px 10px 0px', color: '#3f4269'}}>Настройки моста</Title>
                     <Tooltip title="Количество элементов в мосту">
                         <Form.Item hidden={!world} label="Длина моста">
                             <Input type="number" value={bridgeLength} onChange={(e) => setBridgeLength(Number(e.target.value))} />
@@ -211,11 +243,41 @@ const Level = () => {
                         </div>
                     </div>
                     <Form.Item hidden={!world}>
-                        <Button type="primary" onClick={handleClick} style={{ background: '#3f4269' }}>{`${br ? 'Обновить' : 'Добавить'}`} мост</Button>
+                        <Button type="primary" onClick={handleClick} style={{ background: '#3f4269' }}>{`${bridge ? 'Обновить' : 'Добавить'}`} мост</Button>
+                    </Form.Item>
+                </div>
+                <div style={{ paddingTop: 23 }}>
+                    <Title hidden={!world} level={5} style={{margin: '0px 0px 10px 0px', color: '#3f4269'}}>Настройки машины</Title>
+                    <Tooltip title="Масса машины">
+                        <Form.Item hidden={!world} label="Масса">
+                            <Input type="number" value={mass} onChange={(e) => setMass(Number(e.target.value))} />
+                        </Form.Item>
+                    </Tooltip>
+                    <Tooltip title="Величина, определяющая ускорение машины при равноускоренном движении">
+                        <Form.Item hidden={!world} label="Ускорение">
+                            <Input type="number" value={acceleration} min={0.5} max={100} step={0.1} onChange={(e) => setAcceleration(Number(e.target.value))} />
+                        </Form.Item>
+                    </Tooltip>
+                    <Form.Item hidden={!world}>
+                        <Button type="primary" disabled={!car} onClick={handleCarUpdateClick} style={{ background: '#3f4269' }}>Обновить настройки машины</Button>
                     </Form.Item>
                 </div>
             </Space>
             <div ref={containerRef} className={`bridge-container ${world ? background : ''}`}></div>
+            <Modal
+                open={modal.isOpened}
+                title={modal!.gameResult === 'SUCCESS'? 'Поздравляем!' : 'Увы...'}
+                onCancel={() => setModal({isOpened: false, gameResult: null})}
+                footer={() => (
+                <>
+                    <Button onClick={() => setModal({isOpened: false, gameResult: null})}>Нет</Button>
+                    <Button type="primary" onClick={handleRestart} style={{ background: '#3f4269' }}>Да</Button>
+                </>
+                )}
+            >
+                <p>{modal!.gameResult === 'SUCCESS'? 'Вы успешно преодолели мост.' : 'Вы не смогли преодолеть мост.'}</p>
+                <p>Желаете начать игру занаво?</p>
+            </Modal>
         </Space>
     );
 };
