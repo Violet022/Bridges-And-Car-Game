@@ -1,10 +1,20 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as Matter from 'matter-js';
-import { Input, Button, Form, Space, Select, Tooltip } from 'antd';
+import { Input, Button, Form, Space, Select } from 'antd';
+import { createCar } from '../bodyCreators/Car';
 
 import './Level.css';
+import { createCanvas } from 'canvas';
 
 const { Option } = Select;
+const Engine = Matter.Engine,
+      Render = Matter.Render,
+      Body = Matter.Body,
+      Runner = Matter.Runner,
+      Composites = Matter.Composites,
+      Composite = Matter.Composite,
+      Constraint = Matter.Constraint,
+      Bodies = Matter.Bodies;
 
 // Компонент Level, реализован с помощью Matter.js и частично с помощью chat GPT
 const Level = () => {
@@ -13,7 +23,7 @@ const Level = () => {
     const [density, setDensity] = useState<number>(0.005); // Установка значения по умолчанию
     const [frictionAir, setFrictionAir] = useState<number>(0.5); // Установка значения по умолчанию
     const [world, setWorld] = useState<Matter.World>();
-    const [bridge, setBridge] = useState<Matter.Composite>();
+    const [br, setBridge] = useState<Matter.Composite>();
     const [background, setBackground] = useState<string>('background1');
 
     const [AX, setAX] =useState<number>(240);
@@ -22,25 +32,30 @@ const Level = () => {
     const [BX, setBX] =useState<number>(960);
     const [BY, setBY] =useState<number>(410);
 
+    useEffect(() => {
+        console.log(world)
+    }, [world])
+
    // Обработчик клика на кнопку "Добавить мост"
    const handleClick = () => {
-    if (world) {
+        if (world) {
             // Удаляем все существующие объекты из мира
-            Matter.Composite.clear(world, false, true);
+            // Composite.clear(world, false, true);
 
             //Добавление статических объектов
-            Matter.Composite.add(world, [
-                Matter.Bodies.rectangle(130, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } }),
-                Matter.Bodies.rectangle(1070, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } })
-            ]);
+            // Composite.add(world, [
+            //     Bodies.rectangle(130, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } }),
+            //     Bodies.rectangle(1070, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } })
+            // ]);
     
-            setWorld(world);
-            const group = Matter.Body.nextGroup(true);
+            // setWorld({...world});
+            if(br) Composite.remove(world, br)
+            const group = Body.nextGroup(true);
 
             // Создаем мост
             const bridgeLengthValue = bridgeLength || 10;
-            const bridge = Matter.Composites.stack(160, 290, bridgeLengthValue, 1, 0, 0, (x: number, y: number) => {
-                return Matter.Bodies.rectangle(x - 20, y, 53, 20, {
+            const bridge = Composites.stack(160, 290, bridgeLengthValue, 1, 0, 0, (x: number, y: number) => {
+                return Bodies.rectangle(x - 20, y, 53, 20, {
                     collisionFilter: { group: group },
                     chamfer: 5 as Matter.IChamfer,
                     density: density,
@@ -49,27 +64,23 @@ const Level = () => {
                 });
             });
 
-            Matter.Composites.chain(bridge, 0.3, 0, -0.3, 0, { stiffness: 0.99, length: 0.0001, render: { visible: false } });
+            Composites.chain(bridge, 0.3, 0, -0.3, 0, { stiffness: 0.99, length: 0.0001, render: { visible: false } });
 
-            Matter.Composite.add(world, [
+            Composite.add(world, [
                 bridge,
-                Matter.Constraint.create({ pointA: { x: AX, y: AY }, bodyB: bridge.bodies[0], pointB: { x: -25, y: 0 }, length: 2, stiffness: 0.9 }),
-                Matter.Constraint.create({ pointA: { x: BX, y: BY }, bodyB: bridge.bodies[bridge.bodies.length - 1], pointB: { x: 25, y: 0 }, length: 2, stiffness: 0.9 })
+                Constraint.create({ pointA: { x: AX, y: AY }, bodyB: bridge.bodies[0], pointB: { x: -25, y: 0 }, length: 2, stiffness: 0.9 }),
+                Constraint.create({ pointA: { x: BX, y: BY }, bodyB: bridge.bodies[bridge.bodies.length - 1], pointB: { x: 25, y: 0 }, length: 2, stiffness: 0.9 })
             ]);
+            Composite.add(world, createCar(400, 100, 150 * 0.8, 30 * 0.8, 30 * 0.8))
             setBridge(bridge);
+            setWorld({...world})
         }
     };
 
     // Функция для создания мира и объектов
     const createWorld = () => {
-        const Engine = Matter.Engine,
-            Render = Matter.Render,
-            Runner = Matter.Runner,
-            Composite = Matter.Composite,
-            Bodies = Matter.Bodies;
-
         const engine = Engine.create();
-        const world = engine.world;
+        const runner = Runner.create();
 
         const render = Render.create({
             element: containerRef.current!,
@@ -80,12 +91,15 @@ const Level = () => {
                 background: '',
                 wireframes: false,
                 pixelRatio: window.devicePixelRatio,
-            }
+                showAngleIndicator: true,
+                showCollisions: true
+            },
         });
+        render.canvas = render.canvas || createCanvas(1200, 700);
+        
+        const world = engine.world;
 
         Render.run(render);
-
-        const runner = Runner.create();
         Runner.run(runner, engine);
 
         //Добавление статических объектов
@@ -94,7 +108,37 @@ const Level = () => {
             Bodies.rectangle(1070, 590, 260, 380, { isStatic: true, chamfer: { radius: 20 }, render: { fillStyle: '#3f5669' } })
         ]);
 
+        const scale = 0.8;
+        Composite.add(world, createCar(400, 100, 150 * scale, 30 * scale, 30 * scale))
+
+        const ball = Bodies.circle(90, 280, 20, {
+            render: {
+              sprite: {
+                texture: "https://opengameart.org/sites/default/files/styles/medium/public/SoccerBall_0.png",
+                xScale: 0.4,
+                yScale: 0.4
+              }
+            }
+          });
+          Composite.add(world, ball)
+
         setWorld(world);
+
+        const mouse = Matter.Mouse.create(render.canvas)
+        const mouseConstraint = Matter.MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: {
+                stiffness: 0.2,
+                render: {
+                    visible: false
+                }
+            }
+        });
+
+        Composite.add(world, mouseConstraint);
+
+    // keep the mouse in sync with rendering
+        render.mouse = mouse;
 
         return { engine, world, render, runner };
     };
@@ -167,7 +211,7 @@ const Level = () => {
                         </div>
                     </div>
                     <Form.Item hidden={!world}>
-                        <Button type="primary" onClick={handleClick} style={{ background: '#3f4269' }}>{`${bridge ? 'Обновить' : 'Добавить'}`} мост</Button>
+                        <Button type="primary" onClick={handleClick} style={{ background: '#3f4269' }}>{`${br ? 'Обновить' : 'Добавить'}`} мост</Button>
                     </Form.Item>
                 </div>
             </Space>
