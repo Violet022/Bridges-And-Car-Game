@@ -169,31 +169,45 @@ const Level = () => {
                     <Form.Item hidden={!!world}>
                         <Button type="primary" onClick={handleCreateWorldClick} disabled={!!world} style={{ background: '#3f4269' }}>Начать</Button>
                     </Form.Item>
-                    <Form.Item hidden={!world} label="Длина моста">
-                        <Input type="number" value={bridgeLength} onChange={(e) => setBridgeLength(Number(e.target.value))} />
-                    </Form.Item>
-                    <Form.Item hidden={!world} label="Плотность">
-                        <Input type="number" value={density} min={0.001} max={10000} step={0.001} onChange={(e) => setDensity(Number(e.target.value))} />
-                    </Form.Item>
-                    <Form.Item hidden={!world} label="Коэффициент трения воздуха">
-                        <Input type="number" value={frictionAir} min={0} max={1} step={0.01} onChange={(e) => setFrictionAir(Number(e.target.value))} />
-                    </Form.Item>
+                    <Tooltip title="Количество элементов в мосту">
+                        <Form.Item hidden={!world} label="Длина моста">
+                            <Input type="number" value={bridgeLength} onChange={(e) => setBridgeLength(Number(e.target.value))} />
+                        </Form.Item>
+                    </Tooltip>
+                    <Tooltip title="Плотность каждого из брусков, составляющих мост. Плотность влияет на массу каждого бруска и, следовательно, на его инерцию и устойчивость">
+                        <Form.Item hidden={!world} label="Плотность">
+                            <Input type="number" value={density} min={0.001} max={10000} step={0.001} onChange={(e) => setDensity(Number(e.target.value))} />
+                        </Form.Item>
+                    </Tooltip>
+                    <Tooltip title="Коэффициент трения воздуха, который определяет сопротивление воздуха, оказываемого на каждый брусок моста, 0 означает отсутствие сопротивления и 1 означает максимально возможное сопротивление">
+                        <Form.Item hidden={!world} label="Коэффициент трения воздуха">
+                            <Input type="number" value={frictionAir} min={0} max={1} step={0.01} onChange={(e) => setFrictionAir(Number(e.target.value))} />
+                        </Form.Item>
+                    </Tooltip>
                     <div style={{ display: 'flex', gap: 24 }}>
                         <div>
-                            <Form.Item hidden={!world} label="X">
-                                <Input type="number" value={AX} onChange={(e) => setAX(Number(e.target.value))} />
-                            </Form.Item>
-                            <Form.Item hidden={!world} label="Y">
-                                <Input type="number" value={AY} onChange={(e) => setAY(Number(e.target.value))} />
-                            </Form.Item>
+                            <Tooltip title="Координата X у левого конца моста">
+                                <Form.Item hidden={!world} label="X">
+                                    <Input type="number" value={AX} onChange={(e) => setAX(Number(e.target.value))} />
+                                </Form.Item>
+                            </Tooltip>
+                            <Tooltip title="Координата Y у левого конца моста">
+                                <Form.Item hidden={!world} label="Y">
+                                    <Input type="number" value={AY} onChange={(e) => setAY(Number(e.target.value))} />
+                                </Form.Item>
+                            </Tooltip>
                         </div>
                         <div>
-                            <Form.Item hidden={!world} label="X">
-                                <Input type="number" value={BX} onChange={(e) => setBX(Number(e.target.value))} />
-                            </Form.Item>
-                            <Form.Item hidden={!world} label="Y">
-                                <Input type="number" value={BY} onChange={(e) => setBY(Number(e.target.value))} />
-                            </Form.Item>
+                            <Tooltip title="Координата X у правого конца моста">
+                                <Form.Item hidden={!world} label="X">
+                                    <Input type="number" value={BX} onChange={(e) => setBX(Number(e.target.value))} />
+                                </Form.Item>
+                            </Tooltip>
+                            <Tooltip title="Координата Y у правого конца моста">
+                                <Form.Item hidden={!world} label="Y">
+                                    <Input type="number" value={BY} onChange={(e) => setBY(Number(e.target.value))} />
+                                </Form.Item>
+                            </Tooltip>
                         </div>
                     </div>
                     <Form.Item hidden={!world}>
