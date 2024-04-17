@@ -7,8 +7,8 @@ const Body = Matter.Body,
 const startSpeed = 2;
 
 enum ImgURL {
-    WHEEL = 'https://github.com/Violet022/Bridges-And-Car-Game/blob/car-branch/bridges-and-car-game/src/img/car/wheel.png?raw=true',
-    CAR = 'https://github.com/Violet022/Bridges-And-Car-Game/blob/car-branch/bridges-and-car-game/src/img/car/car_frame.png?raw=true'
+    WHEEL = 'https://raw.githubusercontent.com/Violet022/Bridges-And-Car-Game/main/bridges-and-car-game/src/img/car/wheel.png',
+    CAR = 'https://raw.githubusercontent.com/Violet022/Bridges-And-Car-Game/main/bridges-and-car-game/src/img/car/car_frame.png'
 }
 
 // Функция расчета пройденного расстояния в зависимости от времени и ускорения
